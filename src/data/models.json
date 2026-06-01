@@ -1,0 +1,9 @@
+{
+  "providers": [
+    { "id": "ollama", "name": "Ollama Local", "type": "ollama", "endpoint": "http://localhost:11434", "apiKey": "", "models": ["llama3.1", "codellama", "mistral"] },
+    { "id": "groq", "name": "Groq", "type": "groq", "endpoint": "https://api.groq.com/openai/v1", "apiKey": "", "models": ["llama-3.1-70b-versatile", "llama-3.1-8b-instant"] },
+    { "id": "openrouter", "name": "OpenRouter", "type": "openrouter", "endpoint": "https://openrouter.ai/api/v1", "apiKey": "", "models": ["openai/gpt-4o-mini", "anthropic/claude-3.5-sonnet"] },
+    { "id": "mistral", "name": "Mistral", "type": "mistral", "endpoint": "https://api.mistral.ai/v1", "apiKey": "", "models": ["mistral-large-latest", "codestral-latest"] },
+    { "id": "custom", "name": "Custom OpenAI Compatible", "type": "custom", "endpoint": "http://localhost:8000/v1", "apiKey": "", "models": ["custom-model"] }
+  ]
+}
