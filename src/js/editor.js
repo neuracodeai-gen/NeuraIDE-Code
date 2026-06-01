@@ -19,6 +19,7 @@ export class EditorManager {
         window.require(['vs/editor/editor.main'], () => resolve(), reject);
       });
       this.monaco = window.monaco;
+      this.registerNeuraLanguage();
       this.defineThemes();
       this.editor = this.monaco.editor.create(document.getElementById('monacoEditor'), {
         value: '',
@@ -31,7 +32,7 @@ export class EditorManager {
         automaticLayout: true,
         scrollBeyondLastLine: false
       });
-      this.editor.onDidChangeModelContent(() => this.bus.emit('editor:change', this.getValue()));
+      this.editor.onDidChangeModelContent(() => { this.bus.emit('editor:change', this.getValue()); this.validateCurrentModel(); });
       this.editor.onDidChangeCursorPosition((event) => this.bus.emit('editor:cursor', event.position));
       this.editor.addCommand(this.monaco.KeyMod.CtrlCmd | this.monaco.KeyCode.KeyS, () => this.bus.emit('command', 'save'));
       this.editor.addCommand(this.monaco.KeyMod.CtrlCmd | this.monaco.KeyMod.Shift | this.monaco.KeyCode.KeyF, () => this.replaceInFile());
@@ -61,9 +62,25 @@ export class EditorManager {
     this.bus.emit('editor:cursor', { lineNumber: lines.length, column: lines.at(-1).length + 1 });
   }
 
+  registerNeuraLanguage() {
+    const keywords = 'DECLARE AS INTEGER STRING BOOLEAN ARRAY OUTPUT PRINT INPUT IF THEN ELSEIF ELSE ENDIF WHILE DO ENDWHILE FOR TO STEP ENDFOR TRUE FALSE AND OR NOT MOD SET INCREMENT DECREMENT FUNCTION RETURN ENDFUNC STR LEN LENGTH RANDOM EVAL NGK ENDNGK STYLES ENDSTYLES GETELEMENTBYID GETVALUE SETVALUE GETTEXT SETTEXT REFRESHNGK HTTPGET HTTPPOST INTO DATA'.split(' ');
+    this.monaco.languages.register({ id: 'neura', extensions: ['.neu'], aliases: ['Neura', 'neura'] });
+    this.monaco.languages.setMonarchTokensProvider('neura', {
+      keywords,
+      tokenizer: { root: [
+        [/(DECLARE)(\s+)([a-zA-Z_]\w*)/, ['keyword', 'white', 'variable.neura']],
+        [/([a-zA-Z_]\w*)(\s*=)/, ['variable.neura', 'operator']],
+        [/[A-Z_][\w]*/, { cases: { '@keywords': 'keyword', '@default': 'identifier' } }],
+        [/".*?"/, 'string'], [/\b\d+\b/, 'number'], [/\/\/.*$/, 'comment']
+      ]}
+    });
+    this.monaco.languages.registerCompletionItemProvider('neura', { provideCompletionItems: () => ({ suggestions: keywords.map((word) => ({ label: word, kind: this.monaco.languages.CompletionItemKind.Keyword, insertText: word })) }) });
+  }
+
   defineThemes() {
-    this.monaco.editor.defineTheme('neura-dark', { base: 'vs-dark', inherit: true, rules: [], colors: { 'editor.background': '#0f172a' } });
-    this.monaco.editor.defineTheme('neura-light', { base: 'vs', inherit: true, rules: [], colors: { 'editor.background': '#ffffff' } });
+    const rules = [{ token: 'variable.neura', foreground: '22c55e' }];
+    this.monaco.editor.defineTheme('neura-dark', { base: 'vs-dark', inherit: true, rules, colors: { 'editor.background': '#0f172a' } });
+    this.monaco.editor.defineTheme('neura-light', { base: 'vs', inherit: true, rules, colors: { 'editor.background': '#ffffff' } });
   }
 
   themeName() {
@@ -83,7 +100,7 @@ export class EditorManager {
   openTab(tab) {
     document.getElementById('welcome').style.display = 'none';
     document.getElementById('settingsView')?.classList.add('hidden');
-    document.getElementById('extensionHost')?.classList.add('hidden');
+    document.getElementById('mainPreviewView')?.classList.add('hidden');
     document.getElementById('monacoEditor')?.classList.remove('hidden');
     if (this.fallback) {
       this.fallback.value = tab.content || '';
@@ -96,6 +113,7 @@ export class EditorManager {
       this.models.set(tab.path, model);
     }
     this.editor.setModel(model);
+    this.validateCurrentModel();
     this.editor.focus();
   }
 
@@ -135,6 +153,30 @@ export class EditorManager {
   disposePath(path) {
     this.models.get(path)?.dispose();
     this.models.delete(path);
+  }
+
+  validateCurrentModel() {
+    if (!this.monaco || !this.editor?.getModel) return;
+    const model = this.editor.getModel();
+    if (!model) return;
+    const language = model.getLanguageId();
+    const value = model.getValue();
+    const markers = [];
+    if (language === 'json') {
+      try { JSON.parse(value); } catch (error) { markers.push({ severity: this.monaco.MarkerSeverity.Error, message: error.message, startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 2 }); }
+    }
+    if (['javascript', 'typescript'].includes(language)) {
+      value.split('\n').forEach((line, index) => {
+        if (/\b(var|let|const)\s+\w+\s*=\s*;/.test(line)) markers.push({ severity: this.monaco.MarkerSeverity.Error, message: 'Missing value in assignment', startLineNumber: index + 1, startColumn: 1, endLineNumber: index + 1, endColumn: line.length + 1 });
+        if ((line.match(/\{/g) || []).length < (line.match(/\}/g) || []).length) markers.push({ severity: this.monaco.MarkerSeverity.Warning, message: 'Possible unmatched closing brace', startLineNumber: index + 1, startColumn: 1, endLineNumber: index + 1, endColumn: line.length + 1 });
+      });
+    }
+    if (language === 'neura') {
+      value.split('\n').forEach((line, index) => {
+        if (/^\s*DECLARE\s+\w+\s*$/i.test(line)) markers.push({ severity: this.monaco.MarkerSeverity.Warning, message: 'DECLARE should include AS and a datatype', startLineNumber: index + 1, startColumn: 1, endLineNumber: index + 1, endColumn: line.length + 1 });
+      });
+    }
+    this.monaco.editor.setModelMarkers(model, 'neuraide-basic', markers);
   }
 
   findInFile() {

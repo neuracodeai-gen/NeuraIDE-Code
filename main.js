@@ -105,6 +105,8 @@ function registerIpc() {
   ipcMain.handle('fs:delete', async (_, target) => { try { await fs.rm(normalize(target), { recursive: true, force: true }); return ok(true); } catch (e) { return fail(e); } });
   ipcMain.handle('fs:stat', async (_, target) => { try { const s = await fs.stat(normalize(target)); return ok({ isFile: s.isFile(), isDirectory: s.isDirectory(), size: s.size, mtime: s.mtimeMs }); } catch (e) { return fail(e); } });
   ipcMain.handle('fs:move', async (_, from, to) => { try { await fs.rename(normalize(from), normalize(to)); return ok(true); } catch (e) { return fail(e); } });
+  ipcMain.handle('fs:reveal', async (_, target) => { try { shell.showItemInFolder(normalize(target)); return ok(true); } catch (e) { return fail(e); } });
+  ipcMain.handle('fs:start', async (_, target) => { try { const error = await shell.openPath(normalize(target)); if (error) throw new Error(error); return ok(true); } catch (e) { return fail(e); } });
   ipcMain.handle('config:get', async () => ok(store.get('config', null)));
   ipcMain.handle('config:set', async (_, config) => { store.set('config', config); return ok(true); });
   ipcMain.handle('models:get', async () => ok(store.get('models', null)));

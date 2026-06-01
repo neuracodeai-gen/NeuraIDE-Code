@@ -26,7 +26,7 @@ If local Monaco/xterm assets are unavailable, the renderer falls back to CDN ass
 - In-editor Settings with navigation for editor, AI providers, credits, terminal, and extensions.
 - Model manager with add/remove/edit providers and models, user API key entry, provider/model selection, import/export, and connection testing.
 - Development credits system for providers without user API keys. Default deployment keys live in `src/data/default-keys.json`.
-- Single-file HTML extensions: drop or add an HTML file in the Extensions sidebar, then open it inside the editor area.
+- Single-file HTML extensions: drop or add an HTML file in the Extensions sidebar; each extension appears as a VS Code-style activity-bar icon and opens inside the left sidebar.
 - Command palette: `Ctrl+Shift+P`.
 
 ## Keyboard Shortcuts
@@ -43,7 +43,7 @@ If local Monaco/xterm assets are unavailable, the renderer falls back to CDN ass
 
 ## AI Setup
 
-Open Settings, choose **AI Providers**, and paste your own API keys where required. If a provider has no user key and `Use default-key credits` is enabled, NeuraIDE looks up a development key from `src/data/default-keys.json` and decrements local credits.
+Open Settings, choose **AI Providers**, and paste your own API keys where required. Development default keys are set in `src/data/default-keys.json` under provider ids such as `groq`, `openrouter`, `openai`, `mistral`, `deepseek`, or `ollama-cloud`; restart the app after editing that file. If a provider has no user key and `Use default-key credits` is enabled, NeuraIDE uses that default key and decrements local credits.
 
 Ollama Local works without an API key when the local Ollama server is running. Non-Ollama providers use OpenAI-compatible `/chat/completions` endpoints.
 

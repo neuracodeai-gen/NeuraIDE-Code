@@ -11,7 +11,7 @@ contextBridge.exposeInMainWorld('neura', {
     listDirectory: (dir, recursive) => invoke('fs:list-directory', dir, recursive), readFile: (file) => invoke('fs:read-file', file),
     writeFile: (file, content) => invoke('fs:write-file', file, content), createFile: (file, content) => invoke('fs:create-file', file, content),
     createFolder: (dir) => invoke('fs:create-folder', dir), rename: (from, to) => invoke('fs:rename', from, to), delete: (target) => invoke('fs:delete', target),
-    stat: (target) => invoke('fs:stat', target), move: (from, to) => invoke('fs:move', from, to)
+    stat: (target) => invoke('fs:stat', target), move: (from, to) => invoke('fs:move', from, to), reveal: (target) => invoke('fs:reveal', target), start: (target) => invoke('fs:start', target)
   },
   config: { get: () => invoke('config:get'), set: (config) => invoke('config:set', config) },
   models: { get: () => invoke('models:get'), set: (models) => invoke('models:set', models) },

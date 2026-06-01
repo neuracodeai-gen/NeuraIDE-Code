@@ -233,29 +233,77 @@ export class AI {
     if (!provider) throw new Error('No AI provider configured');
     const keyInfo = this.models.apiKeyFor(provider);
     if (provider.type !== 'ollama' && !keyInfo.apiKey) throw new Error(`No API key for ${provider.name}. Add your key in Settings or configure src/data/default-keys.json credits.`);
-    const output = provider.type === 'ollama'
-      ? await this.ollama(provider, model, prompt)
-      : await this.openAICompatible(provider, model, prompt, keyInfo.apiKey);
+    const messages = this.agentMessages(prompt);
+    for (let step = 0; step < 6; step += 1) {
+      const raw = provider.type === 'ollama'
+        ? await this.ollamaMessages(provider, model, messages)
+        : await this.openAICompatibleMessages(provider, model, messages, keyInfo.apiKey);
+      const parsed = parseAgentResponse(raw);
+      if (!parsed) {
+        if (keyInfo.usingCredits) await this.models.chargeCredit();
+        return raw;
+      }
+      if (parsed.answer && (!parsed.tool_calls || parsed.completed)) {
+        if (keyInfo.usingCredits) await this.models.chargeCredit();
+        return parsed.answer;
+      }
+      messages.push({ role: 'assistant', content: raw });
+      const calls = parsed.tool_calls || [];
+      if (!calls.length) {
+        if (keyInfo.usingCredits) await this.models.chargeCredit();
+        return parsed.answer || raw;
+      }
+      const results = [];
+      for (const call of calls) results.push(await this.runTool(call));
+      messages.push({ role: 'user', content: `Tool results:\n${JSON.stringify(results, null, 2)}\nContinue. Return JSON with completed boolean.` });
+    }
     if (keyInfo.usingCredits) await this.models.chargeCredit();
-    return output;
+    return 'Agent stopped after the maximum tool loop count without completed=true.';
   }
 
-  async openAICompatible(provider, model, prompt, apiKey) {
+  agentMessages(prompt) {
+    const recent = (this.activeChat().messages || []).filter((message) => ['user', 'assistant'].includes(message.role)).slice(-8).map((message) => ({ role: message.role, content: message.content }));
+    recent[recent.length - 1] = { role: 'user', content: prompt };
+    return [
+      { role: 'system', content: `You are NeuraIDE Agent, a code-oriented IDE assistant. You can use tools by returning ONLY JSON: {"completed":false,"answer":"short status","tool_calls":[{"tool":"read_file","args":{"path":"..."}}]}. When done return {"completed":true,"answer":"final answer"}. Available tools: read_file, write_file, list_files, edit_current_file, get_open_tabs. Prefer reading relevant files before editing. The completed boolean is required.` },
+      ...recent
+    ];
+  }
+
+  async runTool(call) {
+    try {
+      const args = call.args || {};
+      if (call.tool === 'read_file') return { tool: call.tool, ok: true, path: args.path, content: await this.fs.read(this.resolvePath(args.path)) };
+      if (call.tool === 'write_file') { await this.fs.write(this.resolvePath(args.path), args.content || ''); await window.app.explorer.refresh(); return { tool: call.tool, ok: true, path: args.path }; }
+      if (call.tool === 'list_files') return { tool: call.tool, ok: true, path: args.path || this.state.workspace, files: await this.fs.list(this.resolvePath(args.path || this.state.workspace), true) };
+      if (call.tool === 'edit_current_file') { window.app.editor.setValue(args.content || ''); return { tool: call.tool, ok: true, path: window.app.tabs.current()?.path || 'current editor' }; }
+      if (call.tool === 'get_open_tabs') return { tool: call.tool, ok: true, tabs: this.state.openTabs.map((tab) => ({ path: tab.path, content: tab.content })) };
+      return { tool: call.tool, ok: false, error: 'Unknown tool' };
+    } catch (error) { return { tool: call.tool, ok: false, error: error.message }; }
+  }
+
+  resolvePath(path) {
+    if (!path) return this.state.workspace;
+    if (/^([a-zA-Z]:)?[\\/]/.test(path)) return path;
+    return this.state.workspace ? this.fs.join(this.state.workspace, path) : path;
+  }
+
+  async openAICompatibleMessages(provider, model, messages, apiKey) {
     const response = await fetch(`${provider.endpoint.replace(/\/$/, '')}/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}`, 'HTTP-Referer': 'https://neuraide.local', 'X-Title': 'NeuraIDE' },
-      body: JSON.stringify({ model, messages: [{ role: 'system', content: 'You are NeuraIDE, an expert coding assistant. Be precise and produce usable code.' }, { role: 'user', content: prompt }], temperature: 0.2 })
+      body: JSON.stringify({ model, messages, temperature: 0.2 })
     });
     if (!response.ok) throw new Error(`AI request failed: ${response.status} ${await response.text()}`);
     const data = await response.json();
     return data.choices?.[0]?.message?.content || JSON.stringify(data);
   }
 
-  async ollama(provider, model, prompt) {
+  async ollamaMessages(provider, model, messages) {
     const response = await fetch(`${provider.endpoint.replace(/\/$/, '')}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], stream: false })
+      body: JSON.stringify({ model, messages, stream: false })
     });
     if (!response.ok) throw new Error(`Ollama failed: ${response.status} ${await response.text()}`);
     const data = await response.json();
@@ -283,4 +331,12 @@ function stripFence(value = '') {
 
 function shortName(path = '') {
   return path.split(/[\\/]/).pop() || path;
+}
+
+function parseAgentResponse(raw = '') {
+  const cleaned = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim();
+  try { return JSON.parse(cleaned); } catch {}
+  const match = cleaned.match(/\{[\s\S]*\}/);
+  if (match) { try { return JSON.parse(match[0]); } catch {} }
+  return null;
 }

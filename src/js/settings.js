@@ -20,7 +20,7 @@ export class Settings {
     this.active = section;
     document.getElementById('welcome').style.display = 'none';
     document.getElementById('monacoEditor').classList.add('hidden');
-    document.getElementById('extensionHost').classList.add('hidden');
+    document.getElementById('mainPreviewView')?.classList.add('hidden');
     this.el.classList.remove('hidden');
     this.render();
   }
@@ -38,7 +38,7 @@ export class Settings {
     if (name.startsWith('provider.')) return this.updateProvider(event);
 
     let value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
-    if (['fontSize', 'tabSize', 'terminalFontSize', 'sidebarWidth', 'aiWidth', 'terminalHeight'].includes(name)) value = Number(value);
+    if (['fontSize', 'tabSize', 'terminalFontSize', 'sidebarWidth', 'aiWidth', 'terminalHeight', 'borderRadius'].includes(name)) value = Number(value);
     this.state.settings[name] = value;
     await window.neura.config.set(this.state.settings);
     this.bus.emit('settings:changed', this.state.settings);
@@ -94,6 +94,7 @@ export class Settings {
     if (action === 'export-models') navigator.clipboard.writeText(JSON.stringify(this.state.models, null, 2));
     if (action === 'import-models') await this.importModels();
     if (action === 'reset-credits') await this.resetCredits();
+    if (action === 'toggle-theme') { this.state.settings.theme = this.state.settings.theme === 'dark' ? 'light' : 'dark'; await window.neura.config.set(this.state.settings); this.bus.emit('settings:changed'); this.render(); }
   }
 
   async addProvider() {
@@ -193,7 +194,7 @@ export class Settings {
 
   editorSection() {
     const s = this.state.settings;
-    return `<h2>Editor</h2>${row('theme', 'Theme', 'select', s.theme, [['dark', 'dark'], ['light', 'light']])}${row('fontSize', 'Font Size', 'number', s.fontSize)}${row('tabSize', 'Tab Size', 'number', s.tabSize)}${row('wordWrap', 'Word Wrap', 'select', s.wordWrap, ['on', 'off', 'wordWrapColumn', 'bounded'].map((item) => [item, item]))}${row('minimap', 'Minimap', 'checkbox', s.minimap)}${row('autoSave', 'Auto Save', 'checkbox', s.autoSave)}${row('sidebarWidth', 'Sidebar Width', 'number', s.sidebarWidth)}${row('aiWidth', 'AI Width', 'number', s.aiWidth)}`;
+    return `<h2>Editor</h2>${row('theme', 'Theme', 'select', s.theme, [['dark', 'dark'], ['light', 'light']])}${row('fontSize', 'Font Size', 'number', s.fontSize)}${row('tabSize', 'Tab Size', 'number', s.tabSize)}${row('wordWrap', 'Word Wrap', 'select', s.wordWrap, ['on', 'off', 'wordWrapColumn', 'bounded'].map((item) => [item, item]))}${row('minimap', 'Minimap', 'checkbox', s.minimap)}${row('autoSave', 'Auto Save', 'checkbox', s.autoSave)}${row('sidebarWidth', 'Sidebar Width', 'number', s.sidebarWidth)}${row('aiWidth', 'AI Width', 'number', s.aiWidth)}${row('borderRadius', 'UI Roundness', 'number', s.borderRadius)}<button data-settings-action="toggle-theme">Toggle Theme</button>`;
   }
 
   terminalSection() {
@@ -203,11 +204,11 @@ export class Settings {
 
   creditsSection() {
     const c = this.state.credits;
-    return `<h2>Credits</h2><p>Credits are used only when a provider has no user API key and has default-key credits enabled.</p><h3>${c.remaining} remaining</h3><p>${c.used} used</p><p>Deployment keys are read from <code>src/data/default-keys.json</code>.</p><button data-settings-action="reset-credits">Reset local dev credits</button>`;
+    return `<h2>Credits & Default Keys</h2><p>Set development default API keys in <code>src/data/default-keys.json</code> under the provider id (for example <code>groq</code>, <code>openrouter</code>, <code>openai</code>). Restart the app after changing that file.</p><p>Credits are used only when a provider has no user API key and has default-key credits enabled.</p><h3>${c.remaining} remaining</h3><p>${c.used} used</p><p>Deployment keys are read from <code>src/data/default-keys.json</code>.</p><button data-settings-action="reset-credits">Reset local dev credits</button>`;
   }
 
   extensionsSection() {
-    return `<h2>Extensions</h2><p>Open the Extensions activity-bar panel, click Add, or drop a single HTML file onto the drop zone. Added extension paths are persisted and can be opened inside the editor area.</p>`;
+    return `<h2>Extensions</h2><p>Open the Extensions activity-bar panel, click Add, or drop a single HTML file onto the drop zone. Added extension paths are persisted and can be opened inside the left sidebar like VS Code views.</p>`;
   }
 }
 

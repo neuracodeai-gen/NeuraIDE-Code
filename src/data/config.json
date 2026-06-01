@@ -9,6 +9,7 @@
   "sidebarWidth": 280,
   "aiWidth": 360,
   "terminalHeight": 260,
+  "borderRadius": 10,
   "defaultAIProvider": "ollama",
   "defaultAIModel": "llama3.1"
 }

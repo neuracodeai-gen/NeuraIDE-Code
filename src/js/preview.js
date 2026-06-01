@@ -5,12 +5,39 @@ export class Preview {
     this.fs = fs;
     this.notify = notify;
     this.frame = document.getElementById('previewFrame');
+    this.mainView = document.getElementById('mainPreviewView');
+    this.mainFrame = document.getElementById('mainPreviewFrame');
+    this.urlInput = document.getElementById('previewUrl');
   }
 
   init() {
     this.bus.on('file:saved', (tab) => {
-      if (document.getElementById('autoPreview').checked && /\.(html?|css|js)$/i.test(tab.path)) this.refresh();
+      if (document.getElementById('autoPreview')?.checked && /\.(html?|css|js)$/i.test(tab.path)) this.refresh();
     });
+    this.urlInput?.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') this.navigateUrl();
+    });
+  }
+
+  openMain(url = '') {
+    document.getElementById('welcome').style.display = 'none';
+    document.getElementById('settingsView')?.classList.add('hidden');
+    document.getElementById('monacoEditor')?.classList.add('hidden');
+    this.mainView.classList.remove('hidden');
+    if (url) this.urlInput.value = url;
+    this.urlInput.focus();
+  }
+
+  closeMain() {
+    this.mainView.classList.add('hidden');
+    document.getElementById('monacoEditor')?.classList.remove('hidden');
+  }
+
+  navigateUrl() {
+    const raw = this.urlInput.value.trim();
+    if (!raw) return this.notify.warning('Type a URL to preview.');
+    const url = /^(https?:|file:|data:)/i.test(raw) ? raw : `https://${raw}`;
+    this.mainFrame.src = url;
   }
 
   async refresh() {
@@ -20,25 +47,20 @@ export class Preview {
     if (!htmlTab || !/\.html?$/i.test(htmlTab.path)) return this.notify.warning('Preview starts from an HTML file');
     const html = await this.bundleHtml(htmlTab);
     this.frame.srcdoc = html;
-    document.querySelector('[data-bottom="preview"]').click();
+    this.openMain();
+    this.mainFrame.srcdoc = html;
   }
 
   async bundleHtml(tab) {
     let html = tab.content;
     const base = this.fs.dir(tab.path);
-    html = await replaceAsync(html, /<link([^>]+)href=["']([^"']+\.css)["']([^>]*)>/gi, async (full, before, href, after) => {
+    html = await replaceAsync(html, /<link([^>]+)href=["']([^"']+\.css)["']([^>]*)>/gi, async (full, before, href) => {
       if (/^(https?:|data:|file:)/i.test(href)) return full;
-      try {
-        const css = await this.fs.read(this.fs.join(base, href));
-        return `<style data-neura-href="${href}">\n${css}\n</style>`;
-      } catch { return full; }
+      try { return `<style data-neura-href="${href}">\n${await this.fs.read(this.fs.join(base, href))}\n</style>`; } catch { return full; }
     });
     html = await replaceAsync(html, /<script([^>]*)src=["']([^"']+\.js)["']([^>]*)><\/script>/gi, async (full, before, src) => {
       if (/^(https?:|data:|file:)/i.test(src)) return full;
-      try {
-        const js = await this.fs.read(this.fs.join(base, src));
-        return `<script data-neura-src="${src}">\n${js}\n<\/script>`;
-      } catch { return full; }
+      try { return `<script data-neura-src="${src}">\n${await this.fs.read(this.fs.join(base, src))}\n<\/script>`; } catch { return full; }
     });
     const baseTag = `<base href="file://${base.replace(/\\/g, '/')}/">`;
     return html.includes('<head>') ? html.replace('<head>', `<head>${baseTag}`) : `${baseTag}${html}`;
