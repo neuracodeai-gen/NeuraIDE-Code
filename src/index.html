@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; connect-src *; img-src 'self' data: file:; frame-src 'self' data: blob: file: https: http:; child-src 'self' data: blob: file: https: http:;" />
+  <title>NeuraIDE</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/themes.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+</head>
+<body data-theme="dark">
+  <div id="app" class="app-shell">
+    <header class="titlebar"><div class="brand"><i class="fa-solid fa-brain"></i> NeuraIDE</div><div id="workspaceTitle" class="workspace-title">No Folder Opened</div><div class="title-actions"><button data-command="toggleSidebar" title="Toggle Sidebar"><i class="fa-solid fa-table-columns"></i></button><button data-command="toggleTerminal" title="Toggle Terminal"><i class="fa-solid fa-terminal"></i></button><button data-command="toggleAI" title="Toggle AI"><i class="fa-solid fa-robot"></i></button><button data-command="toggleTheme" title="Toggle Theme"><i class="fa-solid fa-circle-half-stroke"></i></button><button data-command="openSettings" title="Settings"><i class="fa-solid fa-gear"></i></button></div></header>
+    <aside class="activitybar">
+      <button class="activity active" data-panel="explorer" title="Explorer"><i class="fa-solid fa-folder-tree"></i></button>
+      <button class="activity" data-panel="search" title="Search"><i class="fa-solid fa-magnifying-glass"></i></button>
+      <button class="activity" data-panel="git" title="Git"><i class="fa-solid fa-code-branch"></i></button>
+      <button class="activity" data-command="openPreviewView" title="Preview"><i class="fa-solid fa-globe"></i></button>
+      <button class="activity" data-panel="ai" title="AI"><i class="fa-solid fa-robot"></i></button>
+      <button class="activity" data-panel="extensions" title="Extensions"><i class="fa-solid fa-cubes"></i></button>
+      <div id="activityExtensions" class="activity-extensions"></div>
+      <button class="activity bottom" data-command="openSettings" title="Settings"><i class="fa-solid fa-gear"></i></button>
+    </aside>
+    <aside id="sidebar" class="sidebar">
+      <section class="sidebar-panel active" data-panel-content="explorer">
+        <div class="panel-title"><span>Explorer</span><div><button data-command="newFile" title="New file"><i class="fa-solid fa-file-circle-plus"></i></button><button data-command="newFolder" title="New folder"><i class="fa-solid fa-folder-plus"></i></button><button data-command="refreshExplorer" title="Refresh"><i class="fa-solid fa-rotate"></i></button></div></div>
+        <button class="wide-action" data-command="openFolder">Open Folder</button>
+        <div id="fileTree" class="file-tree"></div>
+      </section>
+      <section class="sidebar-panel" data-panel-content="search"><div class="panel-title">Search</div><input id="globalSearchInput" placeholder="Search in current file"/><button data-command="searchInFile">Find</button><button data-command="replaceInFile">Replace</button></section>
+      <section class="sidebar-panel" data-panel-content="git"><div class="panel-title">Git</div><div class="git-panel"><button data-git-command="git status --short --branch">Status</button><button data-git-command="git diff --stat">Diff Stat</button><button data-git-command="git log --oneline -10">Log</button><button data-git-command="git branch --show-current">Branch</button><div class="git-custom"><input id="gitCommandInput" value="git status"/><button data-command="runGitCommand">Run</button></div><small>Runs in the integrated terminal at the current workspace.</small></div></section>
+      <section class="sidebar-panel" data-panel-content="ai"><div class="panel-title">AI Shortcuts</div><button data-ai-action="explain">Explain Code</button><button data-ai-action="fix">Fix Errors</button><button data-ai-action="refactor">Refactor</button><button data-ai-action="improve">Improve</button><button data-ai-action="generate-file">Generate File</button></section>
+      <section class="sidebar-panel" data-panel-content="extensions"><div class="panel-title"><span>Extensions</span><button data-command="addExtension">Add</button></div><div id="extensionDropZone" class="extension-drop">Drop single-file HTML extensions here</div><div id="extensionsList" class="extensions-list"></div></section>
+      <section class="sidebar-panel extension-sidebar-panel" data-panel-content="extension-view"><div class="panel-title"><span id="extensionViewTitle">Extension</span><button data-panel="extensions" title="Back to extensions"><i class="fa-solid fa-arrow-left"></i></button></div><iframe id="extensionFrame" sandbox="allow-scripts allow-forms allow-same-origin"></iframe></section>
+      <div id="sidebarResizer" class="vertical-resizer"></div>
+    </aside>
+    <main class="main-area">
+      <div id="tabBar" class="tab-bar"></div>
+      <div id="editorHost" class="editor-host"><div id="welcome" class="welcome"><h1>NeuraIDE</h1><p>Open a folder or file to start coding with AI assistance.</p><div><button data-command="openFolder">Open Folder</button><button data-command="openFile">Open File</button><button data-command="openCommandPalette">Command Palette</button></div></div><div id="settingsView" class="settings-view hidden"></div><div id="mainPreviewView" class="main-preview-view hidden"><div class="main-preview-toolbar"><input id="previewUrl" placeholder="Type a URL like https://example.com or file path..."/><button data-command="navigatePreview">Go</button><button data-command="closePreviewView">Close</button></div><webview id="mainPreviewWebview" allowpopups></webview><iframe id="mainPreviewFrame" class="hidden" sandbox="allow-scripts allow-forms allow-same-origin"></iframe></div><div id="monacoEditor"></div></div>
+      <div id="panelResizer" class="horizontal-resizer"></div>
+      <section id="bottomPanel" class="bottom-panel">
+        <div class="bottom-tabs"><button class="active" data-bottom="terminal">Terminal</button><button data-bottom="preview">Preview</button><span class="spacer"></span><button data-command="newTerminal"><i class="fa-solid fa-plus"></i></button><button data-command="clearTerminal"><i class="fa-solid fa-trash"></i></button><button data-command="toggleTerminal"><i class="fa-solid fa-chevron-down"></i></button></div>
+        <div id="terminalPanel" class="bottom-content active"><div id="terminalTabs" class="terminal-tabs"></div><div id="terminalContainer"></div></div>
+        <div id="previewPanel" class="bottom-content"><div class="preview-toolbar"><button data-command="refreshPreview">Refresh</button><button data-command="openPreviewExternal">Open External</button><label><input id="autoPreview" type="checkbox" checked /> Auto refresh</label></div><iframe id="previewFrame" sandbox="allow-scripts allow-forms allow-same-origin"></iframe></div>
+      </section>
+    </main>
+    <aside id="aiPanel" class="ai-panel">
+      <div id="aiResizer" class="vertical-resizer left"></div>
+      <div class="panel-title"><span>AI Assistant</span><button data-command="toggleAI"><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="ai-controls"><select id="providerSelect"></select><select id="modelSelect"></select><span id="creditBadge" class="credit-badge">Credits: --</span></div>
+      <div class="chat-toolbar"><select id="chatSelect" title="Chat sessions"></select><button id="newChat" title="New Chat"><i class="fa-solid fa-plus"></i></button><button id="deleteChat" title="Delete Chat"><i class="fa-solid fa-trash"></i></button></div>
+      <div class="context-toolbar"><button data-ai-context="file">Add File</button><button data-ai-context="selection">Add Selection</button><button data-ai-context="tabs">Add Tabs</button><button data-ai-context="clear">Clear</button></div>
+      <div id="contextChips" class="context-chips"></div>
+      <div id="chatMessages" class="chat-messages"></div>
+      <div class="quick-actions"><button data-ai-action="explain">Explain</button><button data-ai-action="fix">Fix</button><button data-ai-action="refactor">Refactor</button><button data-ai-action="edit-selection">Edit Selection</button><button data-ai-action="edit-file">Edit File</button><button data-ai-action="apply-file">Apply Last To File</button></div>
+      <div class="chat-input"><textarea id="chatInput" placeholder="Ask AI. Use Add File/Add Selection to include context..."></textarea><button id="sendChat"><i class="fa-solid fa-paper-plane"></i></button></div>
+    </aside>
+    <footer class="statusbar"><span id="statusPath">Ready</span><span id="statusLang"></span><span id="statusDirty"></span><span id="statusCursor">Ln 1, Col 1</span></footer>
+  </div>
+  <div id="commandPalette" class="command-palette hidden"><input id="commandInput" placeholder="Type a command..."/><div id="commandList"></div></div>
+  
+  <div id="contextMenu" class="context-menu hidden"></div>
+  <div id="notifications" class="notifications"></div>
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs/loader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
