@@ -113,6 +113,8 @@ function registerIpc() {
   ipcMain.handle('extensions:set', async (_, extensions) => { store.set('extensions', extensions); return ok(true); });
   ipcMain.handle('credits:get', async () => ok(store.get('credits', { remaining: 100, used: 0 })));
   ipcMain.handle('credits:set', async (_, credits) => { store.set('credits', credits); return ok(true); });
+  ipcMain.handle('chats:get', async () => ok(store.get('chats', [])));
+  ipcMain.handle('chats:set', async (_, chats) => { store.set('chats', chats); return ok(true); });
   ipcMain.handle('provider-default-keys:get', async () => ok(getDefaultKeys()));
   ipcMain.handle('terminal:create', async (_, cwd) => { try { return ok(createTerminal(cwd)); } catch (e) { return fail(e); } });
   ipcMain.handle('terminal:write', async (_, id, data) => { try { const t = terminals.get(id); if (!t) throw new Error('Terminal not found'); t.pty ? t.proc.write(data) : t.proc.stdin.write(String(data).replace(/\r/g, os.EOL)); return ok(true); } catch (e) { return fail(e); } });

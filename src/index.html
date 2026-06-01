@@ -14,7 +14,7 @@
 </head>
 <body data-theme="dark">
   <div id="app" class="app-shell">
-    <header class="titlebar"><div class="brand"><i class="fa-solid fa-brain"></i> NeuraIDE</div><div id="workspaceTitle" class="workspace-title">No Folder Opened</div><div class="title-actions"><button data-command="openSettings"><i class="fa-solid fa-gear"></i></button></div></header>
+    <header class="titlebar"><div class="brand"><i class="fa-solid fa-brain"></i> NeuraIDE</div><div id="workspaceTitle" class="workspace-title">No Folder Opened</div><div class="title-actions"><button data-command="toggleSidebar" title="Toggle Sidebar"><i class="fa-solid fa-table-columns"></i></button><button data-command="toggleTerminal" title="Toggle Terminal"><i class="fa-solid fa-terminal"></i></button><button data-command="toggleAI" title="Toggle AI"><i class="fa-solid fa-robot"></i></button><button data-command="openSettings" title="Settings"><i class="fa-solid fa-gear"></i></button></div></header>
     <aside class="activitybar">
       <button class="activity active" data-panel="explorer" title="Explorer"><i class="fa-solid fa-folder-tree"></i></button>
       <button class="activity" data-panel="search" title="Search"><i class="fa-solid fa-magnifying-glass"></i></button>
@@ -49,9 +49,12 @@
       <div id="aiResizer" class="vertical-resizer left"></div>
       <div class="panel-title"><span>AI Assistant</span><button data-command="toggleAI"><i class="fa-solid fa-xmark"></i></button></div>
       <div class="ai-controls"><select id="providerSelect"></select><select id="modelSelect"></select><span id="creditBadge" class="credit-badge">Credits: --</span></div>
+      <div class="chat-toolbar"><select id="chatSelect" title="Chat sessions"></select><button id="newChat" title="New Chat"><i class="fa-solid fa-plus"></i></button><button id="deleteChat" title="Delete Chat"><i class="fa-solid fa-trash"></i></button></div>
+      <div class="context-toolbar"><button data-ai-context="file">Add File</button><button data-ai-context="selection">Add Selection</button><button data-ai-context="tabs">Add Tabs</button><button data-ai-context="clear">Clear</button></div>
+      <div id="contextChips" class="context-chips"></div>
       <div id="chatMessages" class="chat-messages"></div>
-      <div class="quick-actions"><button data-ai-action="explain">Explain</button><button data-ai-action="fix">Fix</button><button data-ai-action="refactor">Refactor</button><button data-ai-action="edit-selection">Edit Selection</button><button data-ai-action="edit-file">Edit File</button></div>
-      <div class="chat-input"><textarea id="chatInput" placeholder="Ask AI to generate, edit, explain, or create files..."></textarea><button id="sendChat"><i class="fa-solid fa-paper-plane"></i></button></div>
+      <div class="quick-actions"><button data-ai-action="explain">Explain</button><button data-ai-action="fix">Fix</button><button data-ai-action="refactor">Refactor</button><button data-ai-action="edit-selection">Edit Selection</button><button data-ai-action="edit-file">Edit File</button><button data-ai-action="apply-file">Apply Last To File</button></div>
+      <div class="chat-input"><textarea id="chatInput" placeholder="Ask AI. Use Add File/Add Selection to include context..."></textarea><button id="sendChat"><i class="fa-solid fa-paper-plane"></i></button></div>
     </aside>
     <footer class="statusbar"><span id="statusPath">Ready</span><span id="statusLang"></span><span id="statusDirty"></span><span id="statusCursor">Ln 1, Col 1</span></footer>
   </div>

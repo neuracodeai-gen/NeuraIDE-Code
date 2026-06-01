@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld('neura', {
   models: { get: () => invoke('models:get'), set: (models) => invoke('models:set', models) },
   extensions: { get: () => invoke('extensions:get'), set: (extensions) => invoke('extensions:set', extensions) },
   credits: { get: () => invoke('credits:get'), set: (credits) => invoke('credits:set', credits) },
+  chats: { get: () => invoke('chats:get'), set: (chats) => invoke('chats:set', chats) },
   providerDefaultKeys: { get: () => invoke('provider-default-keys:get') },
   terminal: { create: (cwd) => invoke('terminal:create', cwd), write: (id, data) => invoke('terminal:write', id, data), resize: (id, cols, rows) => invoke('terminal:resize', id, cols, rows), kill: (id) => invoke('terminal:kill', id) },
   shell: { openExternal: (url) => invoke('shell:open-external', url) },

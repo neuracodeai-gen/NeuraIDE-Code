@@ -36,6 +36,9 @@ export const state = {
   settings: { ...defaultConfig },
   models: structuredClone(defaultModels),
   extensions: [],
+  chats: [],
+  activeChatId: null,
+  aiContext: [],
   credits: { remaining: 100, used: 0 },
   defaultKeys: {},
   dragPath: null
