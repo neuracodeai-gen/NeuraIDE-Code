@@ -1,0 +1,14 @@
+{
+  "theme": "dark",
+  "fontSize": 14,
+  "tabSize": 2,
+  "wordWrap": "on",
+  "minimap": true,
+  "autoSave": false,
+  "terminalFontSize": 13,
+  "sidebarWidth": 280,
+  "aiWidth": 360,
+  "terminalHeight": 260,
+  "defaultAIProvider": "ollama",
+  "defaultAIModel": "llama3.1"
+}

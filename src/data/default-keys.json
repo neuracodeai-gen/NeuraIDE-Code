@@ -1,0 +1,13 @@
+{
+  "description": "Development-only default provider keys. Replace these placeholders before distributing a public build.",
+  "keys": {
+    "groq": "",
+    "openrouter": "",
+    "mistral": "",
+    "ollama-cloud": "",
+    "openai": "",
+    "anthropic": "",
+    "deepseek": "",
+    "gemini": ""
+  }
+}
