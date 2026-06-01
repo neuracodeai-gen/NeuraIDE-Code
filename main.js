@@ -20,6 +20,7 @@ function createWindow() {
     minHeight: 650,
     title: 'NeuraIDE',
     backgroundColor: '#111827',
+    icon: path.join(__dirname, 'src/icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
