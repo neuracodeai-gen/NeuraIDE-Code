@@ -38,9 +38,11 @@ npm start
 
 ## AI Setup
 
-Open Settings, choose a provider, and paste an API key where required. Ollama works without an API key when the local Ollama server is running. For non-Ollama providers, NeuraIDE calls OpenAI-compatible `/chat/completions` endpoints.
+Open Settings, choose **AI Providers**, and paste your own API keys where required. If a provider has no user key and `Use default-key credits` is enabled, NeuraIDE looks up a development key from `src/data/default-keys.json` and decrements local credits.
 
-AI editing is intentionally confirmation-based: generated replacements or files are previewed through a confirmation prompt before NeuraIDE applies them.
+Ollama Local works without an API key when the local Ollama server is running. Non-Ollama providers use OpenAI-compatible `/chat/completions` endpoints.
+
+AI editing is confirmation-based: generated replacements or files are shown through a confirmation prompt before NeuraIDE applies them.
 
 ## Packaging
 

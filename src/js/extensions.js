@@ -23,7 +23,7 @@ export class ExtensionsManager {
     this.drop.addEventListener('drop', async (event) => {
       event.preventDefault();
       this.drop.classList.remove('drop-target');
-      const files = [...event.dataTransfer.files].filter((file) => file.path && file.name.endsWith('.html'));
+      const files = [...event.dataTransfer.files].filter((file) => file.path && /\.html?$/i.test(file.name));
       for (const file of files) await this.add(file.path);
     });
     this.list.addEventListener('click', (event) => {
@@ -37,7 +37,7 @@ export class ExtensionsManager {
 
   async addFromDialog() {
     const paths = await this.fs.openFileDialog();
-    for (const path of paths.filter((item) => item.endsWith('.html'))) await this.add(path);
+    for (const path of paths.filter((item) => /\.html?$/i.test(item))) await this.add(path);
   }
 
   async add(path) {
