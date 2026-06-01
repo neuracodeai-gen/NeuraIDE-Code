@@ -7,6 +7,7 @@ export class Preview {
     this.frame = document.getElementById('previewFrame');
     this.mainView = document.getElementById('mainPreviewView');
     this.mainFrame = document.getElementById('mainPreviewFrame');
+    this.webview = document.getElementById('mainPreviewWebview');
     this.urlInput = document.getElementById('previewUrl');
   }
 
@@ -37,7 +38,10 @@ export class Preview {
     const raw = this.urlInput.value.trim();
     if (!raw) return this.notify.warning('Type a URL to preview.');
     const url = /^(https?:|file:|data:)/i.test(raw) ? raw : `https://${raw}`;
-    this.mainFrame.src = url;
+    this.openMain(url);
+    this.mainFrame.classList.add('hidden');
+    this.webview.classList.remove('hidden');
+    this.webview.src = url;
   }
 
   async refresh() {
@@ -48,6 +52,8 @@ export class Preview {
     const html = await this.bundleHtml(htmlTab);
     this.frame.srcdoc = html;
     this.openMain();
+    this.webview.classList.add('hidden');
+    this.mainFrame.classList.remove('hidden');
     this.mainFrame.srcdoc = html;
   }
 

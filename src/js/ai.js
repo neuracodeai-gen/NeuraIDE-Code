@@ -96,7 +96,7 @@ export class AI {
 
   renderMessages() {
     const chat = this.activeChat();
-    this.messages.innerHTML = (chat?.messages || []).map((message) => `<div class="message ${message.role}">${escapeHtml(message.content)}</div>`).join('');
+    this.messages.innerHTML = (chat?.messages || []).map((message) => `<div class="message ${message.role}">${renderMarkdown(message.content)}</div>`).join('');
     this.messages.scrollTop = this.messages.scrollHeight;
     this.renderChats();
   }
@@ -265,7 +265,7 @@ export class AI {
     const recent = (this.activeChat().messages || []).filter((message) => ['user', 'assistant'].includes(message.role)).slice(-8).map((message) => ({ role: message.role, content: message.content }));
     recent[recent.length - 1] = { role: 'user', content: prompt };
     return [
-      { role: 'system', content: `You are NeuraIDE Agent, a code-oriented IDE assistant. You can use tools by returning ONLY JSON: {"completed":false,"answer":"short status","tool_calls":[{"tool":"read_file","args":{"path":"..."}}]}. When done return {"completed":true,"answer":"final answer"}. Available tools: read_file, write_file, list_files, edit_current_file, get_open_tabs. Prefer reading relevant files before editing. The completed boolean is required.` },
+      { role: 'system', content: `You are NeuraIDE Agent, a code-oriented IDE assistant. You may request IDE tools by returning ONLY JSON text (not provider-native tool calls): {"completed":false,"answer":"short status","tool_calls":[{"tool":"read_file","args":{"path":"..."}}]}. When done return {"completed":true,"answer":"final answer in Markdown"}. Available tools: read_file, write_file, list_files, edit_current_file, get_open_tabs. Prefer reading relevant files before editing. The completed boolean is required.` },
       ...recent
     ];
   }
@@ -294,7 +294,12 @@ export class AI {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}`, 'HTTP-Referer': 'https://neuraide.local', 'X-Title': 'NeuraIDE' },
       body: JSON.stringify({ model, messages, temperature: 0.2 })
     });
-    if (!response.ok) throw new Error(`AI request failed: ${response.status} ${await response.text()}`);
+    if (!response.ok) {
+      const text = await response.text();
+      const failed = extractFailedGeneration(text);
+      if (failed) return failed;
+      throw new Error(`AI request failed: ${response.status} ${text}`);
+    }
     const data = await response.json();
     return data.choices?.[0]?.message?.content || JSON.stringify(data);
   }
@@ -335,8 +340,34 @@ function shortName(path = '') {
 
 function parseAgentResponse(raw = '') {
   const cleaned = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim();
-  try { return JSON.parse(cleaned); } catch {}
+  try { return normalizeAgentObject(JSON.parse(cleaned)); } catch {}
   const match = cleaned.match(/\{[\s\S]*\}/);
-  if (match) { try { return JSON.parse(match[0]); } catch {} }
+  if (match) { try { return normalizeAgentObject(JSON.parse(match[0])); } catch {} }
   return null;
+}
+
+function normalizeAgentObject(value) {
+  if (value?.name && value?.arguments) value = typeof value.arguments === 'string' ? JSON.parse(value.arguments) : value.arguments;
+  if (value?.tool_calls && !Array.isArray(value.tool_calls)) value.tool_calls = [value.tool_calls];
+  return value;
+}
+
+function extractFailedGeneration(text) {
+  try {
+    const data = JSON.parse(text);
+    return data?.error?.failed_generation || data?.failed_generation || '';
+  } catch { return ''; }
+}
+
+function renderMarkdown(value = '') {
+  const escaped = escapeHtml(value);
+  return escaped
+    .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/^### (.*)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.*)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.*)$/gm, '<h1>$1</h1>')
+    .replace(/^[-*] (.*)$/gm, '<li>$1</li>')
+    .replace(/\n/g, '<br>');
 }

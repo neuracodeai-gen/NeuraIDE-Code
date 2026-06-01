@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="icon.png" type="image/png" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; connect-src *; img-src 'self' data: file:; frame-src 'self' data: blob: file:;" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; connect-src *; img-src 'self' data: file:; frame-src 'self' data: blob: file: https: http:; child-src 'self' data: blob: file: https: http:;" />
   <title>NeuraIDE</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css" />
@@ -41,7 +40,7 @@
     </aside>
     <main class="main-area">
       <div id="tabBar" class="tab-bar"></div>
-      <div id="editorHost" class="editor-host"><div id="welcome" class="welcome"><h1>NeuraIDE</h1><p>Open a folder or file to start coding with AI assistance.</p><div><button data-command="openFolder">Open Folder</button><button data-command="openFile">Open File</button><button data-command="openCommandPalette">Command Palette</button></div></div><div id="settingsView" class="settings-view hidden"></div><div id="mainPreviewView" class="main-preview-view hidden"><div class="main-preview-toolbar"><input id="previewUrl" placeholder="Type a URL like https://example.com or file path..."/><button data-command="navigatePreview">Go</button><button data-command="closePreviewView">Close</button></div><iframe id="mainPreviewFrame" sandbox="allow-scripts allow-forms allow-same-origin"></iframe></div><div id="monacoEditor"></div></div>
+      <div id="editorHost" class="editor-host"><div id="welcome" class="welcome"><h1>NeuraIDE</h1><p>Open a folder or file to start coding with AI assistance.</p><div><button data-command="openFolder">Open Folder</button><button data-command="openFile">Open File</button><button data-command="openCommandPalette">Command Palette</button></div></div><div id="settingsView" class="settings-view hidden"></div><div id="mainPreviewView" class="main-preview-view hidden"><div class="main-preview-toolbar"><input id="previewUrl" placeholder="Type a URL like https://example.com or file path..."/><button data-command="navigatePreview">Go</button><button data-command="closePreviewView">Close</button></div><webview id="mainPreviewWebview" allowpopups></webview><iframe id="mainPreviewFrame" class="hidden" sandbox="allow-scripts allow-forms allow-same-origin"></iframe></div><div id="monacoEditor"></div></div>
       <div id="panelResizer" class="horizontal-resizer"></div>
       <section id="bottomPanel" class="bottom-panel">
         <div class="bottom-tabs"><button class="active" data-bottom="terminal">Terminal</button><button data-bottom="preview">Preview</button><span class="spacer"></span><button data-command="newTerminal"><i class="fa-solid fa-plus"></i></button><button data-command="clearTerminal"><i class="fa-solid fa-trash"></i></button><button data-command="toggleTerminal"><i class="fa-solid fa-chevron-down"></i></button></div>
